@@ -73,6 +73,7 @@ static void free_tree(struct tree_node **node)
 ATTRIB(destructor) static void  destruct()
 {
 	free_tree(&g_root);
+	pthread_mutex_destroy(&g_mtx);
 }
 
 
