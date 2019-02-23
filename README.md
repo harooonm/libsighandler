@@ -9,6 +9,8 @@ one can just do the following
 # Usage
 ```code C
 
+#include "signalhandler.h"
+
 void onsig(int num)
 {
     do_something();
