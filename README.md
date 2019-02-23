@@ -6,6 +6,7 @@ you have to manage the lifecycle i.e registration and unregistration of the sign
 this library makes it simple.
 one can just do the following
 
+# Usage
 ```code C
 
 void onsig(int num)
@@ -16,10 +17,11 @@ void onsig(int num)
 int main (int argc, char **argv)
 {
     reg_handler(SIGNUM, onsig);
-    unreg_handler(SIGNUM, onsig);
+    unreg_handler(SIGNUM, onsig);//not necessary but good to do.
     return 0;
 }
-
+```
+# Purpose
 The benefit with this library is that you can have multiple handlers for the same signal
 or you can have the same handler attached to multiple signals.
 
@@ -31,3 +33,11 @@ i would be more than willing to fix or help you.
 if you find a memory leak please do drop me an email.
 
 the goal is to get my code review and testing done by real people other than my self :).
+
+# Build:
+build with make debug or make optimized
+and put the shared libray wherever you want.
+and link with -lsighandler and you should be good to go.
+
+#Usage:
+    see above.
