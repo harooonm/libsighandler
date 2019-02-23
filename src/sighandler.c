@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include "sighandler.h"
 
-#define ATTRIB(attrib)__attribute__((attrib))
-
 struct list_node {
 	on_signal m_handler;
 	struct list_node *m_next;
