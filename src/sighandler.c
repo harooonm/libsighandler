@@ -1,7 +1,6 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include "sighandler.h"
-#include <stdlib.h>
 
 #define ATTRIB(attrib)__attribute__((attrib))
 
