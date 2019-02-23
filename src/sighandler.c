@@ -1,6 +1,5 @@
 #include <pthread.h>
 #include <stdlib.h>
-#include <string.h>
 #include "sighandler.h"
 #include <stdlib.h>
 
@@ -23,7 +22,7 @@ static pthread_mutex_t g_mtx = PTHREAD_MUTEX_INITIALIZER;
 static struct tree_node *g_root = NULL;
 static struct sigaction g_action;
 
-static struct tree_node ** find_sig(struct tree_node **root, int sig_num)
+static struct tree_node **find_sig(struct tree_node **root, int sig_num)
 {
         if(!*root)
                 return NULL;
@@ -95,8 +94,6 @@ static bool add_sig(struct tree_node **root, int sig_num, on_signal handler)
 {
 	if (!*root) {
 		*root = malloc(sizeof(struct tree_node));
-		*root = memset(*root, 0, sizeof(struct tree_node));
-
 		if(sigaction(sig_num, &g_action, (*root)->m_old_act))
 			return false;
 
