@@ -21,21 +21,23 @@ static struct sigaction g_action;
 
 static struct tree_node **find_sig(struct tree_node **root, int sig_num)
 {
-        if(!*root)
-                return NULL;
+	if (!*root) 
+		return NULL;
 
-        if ((*root)->m_sig_num == sig_num)
-        	return root;
+	if (sig_num  > (*root)->m_sig_num)
+		return find_sig(&((*root)->m_right), sig_num);
 
-        find_sig(&((*root)->m_left), sig_num);
-        find_sig(&((*root)->m_right), sig_num);
-        return NULL;
+	if ( sig_num < (*root)->m_sig_num)
+		return find_sig(&((*root)->m_left), sig_num);
+
+	return root;
+	
 }
 
 static void os_sig_handler(int num)
 {
 	pthread_mutex_lock(&g_mtx);
-	struct tree_node **sig = find_sig(&g_root, num);
+	struct tree_node **sig = find_sig(&g_root, num);	
 	if (!sig) {
 		pthread_mutex_unlock(&g_mtx);
 		return;
@@ -93,8 +95,7 @@ static bool add_sig(struct tree_node **root, int sig_num, on_signal handler)
 	if (!*root) {
 		*root = malloc(sizeof(struct tree_node));
 		if(sigaction(sig_num, &g_action, (*root)->m_old_act))
-			return false;
-
+			return false;	
 		(*root)->m_sig_num = sig_num;
 		add_sig_handler(&(*root)->m_handlers, handler);
 
