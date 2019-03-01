@@ -37,9 +37,9 @@ if you find a memory leak please do drop me an email.
 the goal is to get my code review and testing done by real people other than my self :).
 
 # Build:
-build with make debug or make optimized
-and put the shared libray wherever you want.
-and link with -lsighandler and you should be good to go.
-
+for Release build
+	run cmake -DCMAKE_BUILD_TYPE=Release .
+for Debug build
+	run cmake -DCMAKE_BUILD_TYPE=Debug .
 #Usage:
-    see above.
+    see above, or examples

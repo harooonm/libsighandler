@@ -160,6 +160,8 @@ void unreg_handler(int sig_num, on_signal handler)
 	}
 
 	remove_handler(handler, &((*sig_node)->m_handlers));
+	/*TODO: delete the tree node if there are no more handlers, dont leave
+	 * leaf nodes for end*/
 	if (!(*sig_node)->m_handlers)
 		sigaction((*sig_node)->m_sig_num, (*sig_node)->m_old_act, NULL);
 	pthread_mutex_unlock(&g_mtx);

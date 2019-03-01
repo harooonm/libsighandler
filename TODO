@@ -1,4 +1,3 @@
 # TODO
-  1.tests
-  2.examples
-  3.perofrmance benchmarks ???
+
+1.remove signal noe from tree when no signals are left
