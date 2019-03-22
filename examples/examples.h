@@ -13,15 +13,14 @@
 pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
-
 void wait_on_cond()
 {
 	pthread_mutex_lock(&mtx);
-        pthread_cond_wait(&cond, &mtx);
-        pthread_mutex_unlock(&mtx);
+	pthread_cond_wait(&cond, &mtx);
+	pthread_mutex_unlock(&mtx);
 
 	pthread_mutex_destroy(&mtx);
-        pthread_cond_destroy(&cond);
+	pthread_cond_destroy(&cond);
 }
 
 void signal_cond()
