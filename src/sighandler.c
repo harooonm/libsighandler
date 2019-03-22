@@ -5,15 +5,10 @@
 
 /*lazy*/
 #define attrib(a) __attribute__((a))                                           
-#define nonNULL(...) attrib(nonNULL(__VA_ARGS__))
+#define nonnull(...) attrib(nonnull(__VA_ARGS__))
 
 typedef void (*on_sig)(int);
 typedef void (*on_sigact)(int, siginfo_t *, void *);
-
-enum handler_type{
-	SA_HANDLER,
-	SIGACT_HANDLER
-};
 
 struct list_node{
 	on_sig sig_handler;
@@ -31,8 +26,9 @@ struct tree_node{
 
 static struct tree_node *root;
 static pthread_mutex_t mtx;
+static struct sigaction action;
 
-static struct tree_node nonNULL(1) **find_sig_node(struct tree_node **n,
+static struct tree_node nonnull(1) **find_sig_node(struct tree_node **n,
                 int sig_nr)
 {
         struct tree_node **node_ptr  = n;
@@ -48,6 +44,33 @@ static struct tree_node nonNULL(1) **find_sig_node(struct tree_node **n,
 }
 
 
+static void _os_sig_handler(int sig_nr, siginfo_t *info, void *e)
+{
+	pthread_mutex_lock(&mtx);
+	struct tree_node **n = find_sig_node(&root, sig_nr);
+	if (n) {
+		struct list_node *ln = (*n)->handlers;
+		while (ln) {
+			if (info && e)
+				ln->sigact_handler(sig_nr, info, e);
+			else
+				ln->sig_handler(sig_nr);
+			ln = ln->next;
+		}
+	}
+	pthread_mutex_unlock(&mtx);
+}
+
+
+static void os_sig_handler(int sig_nr)
+{
+	_os_sig_handler(sig_nr, NULL, NULL);
+}
+
+static void os_sig_acthandler(int sig_nr, siginfo_t *info, void *e)
+{
+	_os_sig_handler(sig_nr, info, e);
+}
 
 static void attrib(constructor) construct()
 {
@@ -56,6 +79,9 @@ static void attrib(constructor) construct()
 	root->left = NULL;
 	root->right = NULL;
 	pthread_mutex_init(&mtx, NULL);
+	action.sa_flags = 0;
+	sigemptyset(&action.sa_mask);
+	action.sa_restorer = 0;
 }
 
 static void free_tree(struct tree_node **n)
@@ -71,7 +97,7 @@ static void free_tree(struct tree_node **n)
 	free(*n);
 }
 
-static void nonNULL(1) del_node(struct tree_node **root, int sig_nr)
+static void nonnull(1) del_node(struct tree_node **root, int sig_nr)
 {
 	struct tree_node **node = find_sig_node(root, sig_nr);
 	if (!node)
@@ -87,7 +113,8 @@ static void nonNULL(1) del_node(struct tree_node **root, int sig_nr)
 		free(*follow);
 		*follow = NULL;
 	}else if ((*node)->left || (*node)->right){
-		struct tree_node *cp = (*node)->left ? (*node)->left : (*node)->right;
+		struct tree_node *cp = (*node)->left ? (*node)->left :
+				(*node)->right;
 		free(*node);
 		(*node)= NULL;
 		*node = cp;
@@ -104,21 +131,20 @@ static void attrib(destructor) destruct()
 }
 
 
-static void add_handler(struct list_node **head, on_sig sig_handler, on_sigact act_handler,
-		int type)
+static void add_handler(struct list_node **head, on_sig sig_handler,
+		on_sigact sig_acthandler)
 {
 	struct list_node **cur = head;
 	while (*cur)
 		cur = &((*cur)->next);
+
 	*cur = malloc(sizeof(struct list_node));
-	switch (type) {
-	case SA_HANDLER:
+
+	if (sig_handler)
 		(*cur)->sig_handler = sig_handler;
-		break;
-	case SIGACT_HANDLER:
-		(*cur)->sigact_handler = act_handler;
-		break;
-	}
+	if (sig_acthandler)
+		(*cur)->sigact_handler = sig_acthandler;
+
 	(*cur)->next = NULL;
 }
 
@@ -134,50 +160,83 @@ static int find_handler(struct list_node *n, on_sigact act, on_sig sahandler)
 	return 0;
 }
 
-static void nonNULL(1) add_node(struct tree_node **n, int sig_nr, on_sig sig_handler, on_sigact sig_acthandler, int type)
+static int nonnull(1) add_node(struct tree_node **n, int sig_nr,
+		on_sig sig_handler, on_sigact sig_acthandler, int blck_mask,
+		int flags)
 {
         struct tree_node **node_ptr  = n;
+
         while(*node_ptr){
                 if (sig_nr > (*node_ptr)->sig_nr)
                         node_ptr = &(*node_ptr)->right;
                 else
                         node_ptr = &(*node_ptr)->left;
         }
+
         *node_ptr = malloc(sizeof(struct tree_node));
         (*node_ptr)->sig_nr = sig_nr;
         (*node_ptr)->left = NULL;
         (*node_ptr)->right = NULL;
-        add_handler(&(*node_ptr)->handlers, sig_handler, sig_acthandler, type);
+
+	sigaddset(&action.sa_mask, blck_mask);
+	action.sa_flags |= flags;
+
+	if (sig_acthandler)
+		action.sa_sigaction = os_sig_acthandler;
+	if (sig_handler)
+		action.sa_handler = os_sig_handler;
+
+	if(sigaction(sig_nr, &action, (*node_ptr)->old_act))
+		return errno;
+
+        add_handler(&(*node_ptr)->handlers, sig_handler, sig_acthandler);
+
+        return 1;
 }
 
-static int _reg_sig(int sig_nr, on_sigact act_hanlder, on_sig sig_handler,
-		int blck_mask, int flags, int type)
+static int _reg_sig(int sig_nr,  on_sig sig_handler,on_sigact sigact_handler,
+		int blck_mask, int flags)
 {
 	if (sig_nr == SIGKILL || sig_nr == SIGSTOP)
 		return EINVAL;
 
 	pthread_mutex_lock(&mtx);
-	int reged = 0;
 	struct tree_node **sig_node = find_sig_node(sig_nr);
+	int reged = 0;
 	if (sig_node != NULL){
-		if (!find_handler((*sig_node)->handlers, act_hanlder, sig_handler))
-			add_handler(&(*sig_node)->handlers, sig_handler, act_hanlder, type);
+		if (!find_handler((*sig_node)->handlers, sigact_handler,
+				sig_handler))
+			add_handler(&(*sig_node)->handlers, sig_handler,
+					sigact_handler);
+		reged = 1;
 	}else {
-		add_node(&root, sig_nr, sig_handler, act_hanlder, type);
+		reged = add_node(&root, sig_nr, sig_handler, sigact_handler,
+				blck_mask, flags);
 	}
 	pthread_mutex_unlock(&mtx);
 
-	return reged;
+	return 1;
 }
 
-int reg_sig(int sig_nr, on_sig handler , int blck_mask, int flags)
+int reg_sig(int sig_nr, on_sig sig_handler, int blck_mask, int flags)
 {
-	return _reg_sig(sig_nr, NULL, handler, blck_mask, flags,
-			SA_HANDLER);
+	return _reg_sig(sig_nr,  sig_handler, NULL, blck_mask, flags);
 }
 
-int reg_sigaction(int sig_nr, on_sigact handler, int blck_mask, int flags)
+int reg_sigaction(int sig_nr, on_sigact sigact_handler, int blck_mask, int flags)
 {
-	return _reg_sig(sig_nr,  handler, NULL, blck_mask, flags,
-			SIGACT_HANDLER);
+	return _reg_sig(sig_nr, NULL, sigact_handler, blck_mask, flags);
+}
+
+static void unreg_sig(int sig_num, void(*sahandler)(int))
+{
+	//find the sig_node , remove the handler
+	//if the node has no handlers remove the node
+}
+
+static void unreg_sigaction(int sig_num, void(*sigact_handler)(int, siginfo_t *,
+		void *))
+{
+	//find the sig_node , remove the handler
+	//if the node has no handlers remove the node
 }
