@@ -220,8 +220,8 @@ static void remove_list_node(struct list_node **head, on_sig sahadler,
 int _reg_sig(int sig_nr, on_sig sig_handler, on_sigact sigact_handler,
                 int blck_mask, int flags)
 {
-	if (!sig_nr || sig_nr == SIGKILL || sig_nr == SIGSTOP)
-		return EINVAL;
+	if (!sig_nr || sig_nr == SIGKILL || sig_nr == SIGSTOP || (!sig_handler && !sigact_handler))
+		return 0;
 
 	pthread_mutex_lock(&mtx);
 	struct tree_node **sig_node = find_sig_node(&root, sig_nr);
