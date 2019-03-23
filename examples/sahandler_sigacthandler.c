@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 
-/*XXX:this is an insance hacky example
+/*XXX:this is an insane hacky example
  * noramlly when you register sigaction and sahandler on the same signal
  * linux only calls the sigaction handler
  * but using this library you can call both :p
