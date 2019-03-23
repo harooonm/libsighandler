@@ -211,6 +211,7 @@ static void remove_list_node(struct list_node **head, on_sig sahadler,
 			*cur = n;
 			break;
 		}
+		cur = &(*cur)->next;
 	}
 }
 
@@ -247,8 +248,9 @@ void _unreg_sig(int sig_num, on_sig sig_handler,
 	struct tree_node **n = find_sig_node(&root, sig_num);
 	if (n) {
 		remove_list_node(&(*n)->handlers, sig_handler, sig_acthandler);
-		if (!(*n)->handlers)
+		if (!(*n)->handlers){
 			del_node(n, sig_num);
+		}
 	}
 	pthread_mutex_unlock(&mtx);
 }

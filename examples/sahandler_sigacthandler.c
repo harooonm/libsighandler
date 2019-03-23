@@ -34,5 +34,7 @@ int main()
 	}
 	puts("waiting for ctrl+c");
 	wait_on_cond();
+	unreg_sig(SIGINT, sig_handler);
+	unreg_sigaction(SIGINT, act_handler);
 	return 0;
 }
