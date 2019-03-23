@@ -37,6 +37,7 @@ if you find a memory leak please do drop me an email.
 the goal is to get my code review and testing done by real people other than my self :).
 
 # Build:
+In some directory.
 for Release build
 	run cmake -DCMAKE_BUILD_TYPE=Release .
 for Debug build
