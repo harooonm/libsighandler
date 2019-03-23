@@ -50,9 +50,9 @@ static void _os_sig_handler(int sig_nr, siginfo_t *info, void *e)
 	if (n) {
 		struct list_node *ln = (*n)->handlers;
 		while (ln) {
-			if (info && e)
+			if (info && e && ln->sigact_handler)
 				ln->sigact_handler(sig_nr, info, e);
-			else
+			else if (ln->sig_handler)
 				ln->sig_handler(sig_nr);
 			ln = ln->next;
 		}
@@ -149,9 +149,7 @@ static void add_handler(struct list_node **head, on_sig sig_handler,
 static int find_handler(struct list_node *n, on_sigact act, on_sig sahandler)
 {
 	while (n) {
-		if (n->sig_handler && n->sig_handler == sahandler)
-			return 1;
-		if (n->sigact_handler && n->sigact_handler == act)
+		if (n->sig_handler == sahandler && n->sigact_handler == act)
 			return 1;
 		n = n->next;
 	}
@@ -186,7 +184,7 @@ static int nonnull(1) add_node(struct tree_node **n, int sig_nr,
 		action.sa_handler = os_sig_handler;
 
 	if (sigaction(sig_nr, &action, (*node_ptr)->old_act))
-		return errno;
+		return 0;
 
 	add_handler(&(*node_ptr)->handlers, sig_handler, sig_acthandler);
 
@@ -220,7 +218,8 @@ static void remove_list_node(struct list_node **head, on_sig sahadler,
 int _reg_sig(int sig_nr, on_sig sig_handler, on_sigact sigact_handler,
                 int blck_mask, int flags)
 {
-	if (!sig_nr || sig_nr == SIGKILL || sig_nr == SIGSTOP || (!sig_handler && !sigact_handler))
+	if (!sig_nr || sig_nr == SIGKILL || sig_nr == SIGSTOP ||
+			(!sig_handler && !sigact_handler))
 		return 0;
 
 	pthread_mutex_lock(&mtx);
