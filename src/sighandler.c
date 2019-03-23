@@ -193,40 +193,6 @@ static int nonnull(1) add_node(struct tree_node **n, int sig_nr,
 	return 1;
 }
 
-static int _reg_sig(int sig_nr, on_sig sig_handler, on_sigact sigact_handler,
-                int blck_mask, int flags)
-{
-	if (!sig_nr || sig_nr == SIGKILL || sig_nr == SIGSTOP)
-		return EINVAL;
-
-	pthread_mutex_lock(&mtx);
-	struct tree_node **sig_node = find_sig_node(&root, sig_nr);
-	int reged = 0;
-	if (sig_node != NULL) {
-		if (!find_handler((*sig_node)->handlers, sigact_handler,
-		                sig_handler))
-			add_handler(&(*sig_node)->handlers, sig_handler,
-			                sigact_handler);
-		reged = 1;
-	} else {
-		reged = add_node(&root, sig_nr, sig_handler, sigact_handler,
-		                blck_mask, flags);
-	}
-	pthread_mutex_unlock(&mtx);
-
-	return reged;
-}
-
-int reg_sig(int sig_nr, on_sig sig_handler, int blck_mask, int flags)
-{
-	return _reg_sig(sig_nr, sig_handler, NULL, blck_mask, flags);
-}
-
-int reg_sigaction(int sig_nr, on_sigact sigact_handler, int blck_mask,
-                int flags)
-{
-	return _reg_sig(sig_nr, NULL, sigact_handler, blck_mask, flags);
-}
 
 
 static void remove_list_node(struct list_node **head, on_sig sahadler,
@@ -250,7 +216,32 @@ static void remove_list_node(struct list_node **head, on_sig sahadler,
 	}
 }
 
-static void _unreg_sig(int sig_num, on_sig sig_handler,
+/*public function*/
+int _reg_sig(int sig_nr, on_sig sig_handler, on_sigact sigact_handler,
+                int blck_mask, int flags)
+{
+	if (!sig_nr || sig_nr == SIGKILL || sig_nr == SIGSTOP)
+		return EINVAL;
+
+	pthread_mutex_lock(&mtx);
+	struct tree_node **sig_node = find_sig_node(&root, sig_nr);
+	int reged = 0;
+	if (sig_node != NULL) {
+		if (!find_handler((*sig_node)->handlers, sigact_handler,
+		                sig_handler))
+			add_handler(&(*sig_node)->handlers, sig_handler,
+			                sigact_handler);
+		reged = 1;
+	} else {
+		reged = add_node(&root, sig_nr, sig_handler, sigact_handler,
+		                blck_mask, flags);
+	}
+	pthread_mutex_unlock(&mtx);
+
+	return reged;
+}
+
+void _unreg_sig(int sig_num, on_sig sig_handler,
                 on_sigact sig_acthandler)
 {
 	pthread_mutex_lock(&mtx);
@@ -261,14 +252,4 @@ static void _unreg_sig(int sig_num, on_sig sig_handler,
 			del_node(n, sig_num);
 	}
 	pthread_mutex_unlock(&mtx);
-}
-
-void unreg_sig(int sig_nr, on_sig sig_handler)
-{
-	_unreg_sig(sig_nr,  sig_handler, NULL);
-}
-
-void unreg_sigaction(int sig_nr, on_sigact sig_acthandler)
-{
-	_unreg_sig(sig_nr, NULL, sig_acthandler);
 }
