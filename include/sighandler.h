@@ -1,12 +1,19 @@
 #ifndef INCLUDE_SIGHANDLER_H_
 #define INCLUDE_SIGHANDLER_H_
 
-extern int reg_sig(int sig_num, void(*sahandler)(int), int mask, int flags);
-extern int reg_sigaction(int sig_num,
-		void(*sigact_handler)(int, siginfo_t *, void *),
-		int mask, int flags);
+#include <signal.h>
 
-extern unreg_sig(int sig_num, void(*sahandler)(int));
-extern unreg_sigaction(int sig_num, void(*sigact_handler)(int, siginfo_t *, void *));
+extern int __attribute__((nonnull(2))) reg_sig(const int sig_num,
+		const void(*sahandler)(int), const int mask, const int flags);
+
+extern int __attribute__((nonnull(2))) reg_sigaction(const int sig_num,
+		const void(*sigact_handler)(int, siginfo_t *, void *),
+		const int mask, const int flags);
+
+extern void __attribute__((nonnull(2))) unreg_sig(const int sig_num,
+		const void(*sahandler)(int));
+
+extern void __attribute__((nonnull(2))) unreg_sigaction(const int sig_num,
+		const void(*sigact_handler)(int, siginfo_t *, void *));
 
 #endif

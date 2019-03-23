@@ -19,22 +19,22 @@ void three(int UNUSED n)
 
 int main(int UNUSED argc, char UNUSED **argv)
 {
-	char *err ="reg_handler(one)";
-	if (!reg_handler(SIGINT, one))	
-		goto perror_exit;
+	char *err ="reg_sig(one)";
+	if (!reg_sig(SIGINT, one, 0, 0))
+		goto return0;
 	
-	err = "reg_handler(two)";
-	if (!reg_handler(SIGINT, two))	
-		goto perror_exit;
+	err = "reg_sig(two)";
+	if (!reg_sig(SIGINT, two, 0, 0))
+		goto return0;
 
-	err = "reg_handler(three)";
-	if (!reg_handler(SIGINT, three))	
-		goto perror_exit;
+	err = "reg_sig(three)";
+	if (!reg_sig(SIGINT, three, 0, 0))
+		goto return0;
 
 	err = "waiting for three";
 	paste(FMT_STR, "i am waiting for three to be called press CTRL + C");
 	wait_on_cond();
-perror_exit:
-	perror(err);
-	return errno;
+
+	return0:
+		return 0;
 }

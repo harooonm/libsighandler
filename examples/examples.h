@@ -2,13 +2,12 @@
 #define __EXAMPLES_H_
 
 #include "sighandler.h"
-#include <errno.h>
 #include <stdio.h>
 #include <pthread.h>
 
 #define FMT_STR "%s\n"
 #define paste(fmt,...) fprintf(stdout, fmt, __VA_ARGS__);
-#define UNUSED ATTRIB(unused)
+#define UNUSED __attribute__((unused))
 
 pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;

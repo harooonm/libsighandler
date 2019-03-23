@@ -4,38 +4,37 @@
 
 void many(int n)
 {
-	switch(n) {
-		case SIGINT:
-			paste(FMT_PRNT, SIGINT);
-			break;
-		case SIGQUIT:
-			paste(FMT_PRNT, SIGQUIT);
-			break;
-		case SIGUSR2:
-			paste(FMT_PRNT, SIGUSR2);
-			signal_cond();
-			break;
+	switch (n) {
+	case SIGINT:
+		paste(FMT_PRNT, SIGINT);
+		break;
+	case SIGQUIT:
+		paste(FMT_PRNT, SIGQUIT);
+		break;
+	case SIGUSR2:
+		paste(FMT_PRNT, SIGUSR2);
+		signal_cond();
+		break;
 	}
 }
 
-int main(int UNUSED argc, char UNUSED **argv)
+int main(int argc, char **argv)
 {
-	char *err ="reg_handler(SIGINT)";
-	if (!reg_handler(SIGINT, many))	
-		goto perror_exit;
+	char *err = "reg_sig(SIGINT)";
+	if (!reg_sig(SIGINT, many, 0, 0))
+		goto return0;
 
-	err = "reg_handler(SIGQUIT)";
-	if (!reg_handler(SIGQUIT, many))	
-		goto perror_exit;
+	err = "reg_sig(SIGQUIT)";
+	if (!reg_sig(SIGQUIT, many, 0, 0))
+		goto return0;
 
-	err = "reg_handler(SIGUSR2)";
-	if (!reg_handler(SIGUSR2, many))	
-		goto perror_exit;
+	err = "reg_sig(SIGUSR2)";
+	if (!reg_sig(SIGUSR2, many, 0, 0))
+		goto return0;
 
 	err = "waiting for SIGUSR2";
 	paste(FMT_STR, "i am waiting for SIGUSR2");
 	wait_on_cond();
-perror_exit:
-	perror(err);
-	return errno;
+	return0:
+		return 0;
 }
