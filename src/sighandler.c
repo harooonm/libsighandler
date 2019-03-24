@@ -96,7 +96,7 @@ static void free_tree(struct tree_node **n)
 	free(*n);
 }
 
-static void nonnull(1) del_node(struct tree_node **node, int sig_nr)
+static void nonnull(1) del_node(struct tree_node **node)
 {
 
 	if (!node)
@@ -215,8 +215,8 @@ static void remove_list_node(struct list_node **head, on_sig sahadler,
 	}
 }
 
-/*public function*/
-int _reg_sig(int sig_nr, on_sig sig_handler, on_sigact sigact_handler,
+
+static int _reg_sig(int sig_nr, on_sig sig_handler, on_sigact sigact_handler,
                 int blck_mask, int flags)
 {
 	if (!sig_nr || sig_nr == SIGKILL || sig_nr == SIGSTOP ||
@@ -241,7 +241,7 @@ int _reg_sig(int sig_nr, on_sig sig_handler, on_sigact sigact_handler,
 	return reged;
 }
 
-void _unreg_sig(int sig_num, on_sig sig_handler,
+static void _unreg_sig(int sig_num, on_sig sig_handler,
                 on_sigact sig_acthandler)
 {
 	pthread_mutex_lock(&mtx);
@@ -249,8 +249,35 @@ void _unreg_sig(int sig_num, on_sig sig_handler,
 	if (n) {
 		remove_list_node(&(*n)->handlers, sig_handler, sig_acthandler);
 		if (!(*n)->handlers){
-			del_node(n, sig_num);
+			del_node(n);
 		}
 	}
 	pthread_mutex_unlock(&mtx);
+}
+
+
+/*public functions*/
+int reg_sig(const int sig_nr, const void(*sahandler)(const int),
+                const int mask, const int flags)
+{
+	return _reg_sig(sig_nr, sahandler, NULL, mask, flags);
+}
+
+int reg_sigaction(const int sig_nr,
+                const void(*sigact_handler)(int, siginfo_t *, void *),
+                const int mask, const int flags)
+{
+	return _reg_sig(sig_nr, NULL, sigact_handler, mask, flags);
+}
+
+
+void unreg_sig(const int sig_nr, const void(*sahandler)(const int))
+{
+	return _unreg_sig(sig_nr, sahandler, NULL);
+}
+
+void unreg_sigaction(const int sig_nr,
+                const void(*sigact_handler)(int, siginfo_t *, void *))
+{
+	return _unreg_sig(sig_nr, NULL, sigact_handler);
 }
