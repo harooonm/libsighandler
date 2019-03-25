@@ -52,7 +52,7 @@ static void _os_sig_handler(int sig_nr, siginfo_t *info, void *e)
 		while (ln) {
 			if (info && e && ln->sigact_handler)
 				ln->sigact_handler(sig_nr, info, e);
-			else if (ln->sig_handler)
+			else if (ln->sig_handler && !info && !e)
 				ln->sig_handler(sig_nr);
 			ln = ln->next;
 		}
@@ -137,7 +137,8 @@ static void add_handler(struct list_node **head, on_sig sig_handler,
 		cur = &((*cur)->next);
 
 	*cur = malloc(sizeof(struct list_node));
-
+	(*cur)->sig_handler = NULL;
+	(*cur)->sigact_handler = NULL;
 	if (sig_handler)
 		(*cur)->sig_handler = sig_handler;
 	if (sig_acthandler)
@@ -173,7 +174,8 @@ static int nonnull(1) add_node(struct tree_node **n, int sig_nr,
 	(*node_ptr)->sig_nr = sig_nr;
 	(*node_ptr)->left = NULL;
 	(*node_ptr)->right = NULL;
-
+	(*node_ptr)->old_act = NULL;
+	(*node_ptr)->handlers = NULL;
 	sigaddset(&action.sa_mask, blck_mask);
 	action.sa_flags |= flags;
 
