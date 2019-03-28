@@ -83,11 +83,11 @@ static void free_tree(struct tree_node **n)
 	free_tree(&(*n)->right);
 
 	/*free the list*/
-	struct list_node *ln = (*n)->handlers;
-	while(ln) {
-		struct list_node *nn = ln->next;
-		free(ln);
-		ln = nn;
+	//struct list_node *ln = (*n)->handlers;
+	while((*n)->handlers) {
+		struct list_node *nn = (*n)->handlers->next;
+		free((*n)->handlers);
+		(*n)->handlers = nn;
 	}
 	/*restore old action*/
 	sigaction((*n)->sig_nr, (*n)->old_act, NULL);
