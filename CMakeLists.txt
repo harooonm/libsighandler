@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.9)
 project(libsighandler)
 
+include(ExternalProject)
+
+
+
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -Wfatal-errors -D_POSIX_C_SOURCE=200112L -std=c11")
 
 if(CMAKE_BUILD_TYPE EQUAL "Debug")
@@ -9,10 +13,13 @@ else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
 endif()
 
-include_directories(include)
+add_subdirectory(../libbtree ../libbtree)
+add_subdirectory(../liblinkedlist ../liblinkedlist)
+
+include_directories(include ../liblinkedlist/include ../libbtree/include)
 add_library(sighandler SHARED "src/sighandler.c")
 set_property(TARGET sighandler PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_link_libraries(sighandler pthread)
+target_link_libraries(sighandler pthread btree linkedlist)
 
 
 #build examples
