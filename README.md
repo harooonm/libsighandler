@@ -1,6 +1,6 @@
 # libsighandler
 A shared library that C applications can use for signal handling.
-Usually in C when an application needs to do signal handling , 
+Usually in C when an application needs to do signal handling ,
 sigaction is used, and if you want to have multiple signals
 you have to manage the lifecycle i.e registration and unregistration of the signal.
 this library makes it simple.
@@ -39,8 +39,10 @@ the goal is to get my code review and testing done by real people other than my 
 # Build:
 In some directory.
 for Release build
-	run cmake -DCMAKE_BUILD_TYPE=Release .
+	run ./build.sh Release
 for Debug build
-	run cmake -DCMAKE_BUILD_TYPE=Debug .
+	run ./build.sh Debug
+
+**Until i figure out how to use ExternalProject_Add
 #Usage:
     see above, or examples
