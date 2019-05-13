@@ -18,13 +18,13 @@ struct tree_data {
 	int flags;
 	struct sigaction *old_act;
 	struct linked_list_node *handlers;
-}__attribute__((packed));
+};
 
 struct sig_handler_args {
 	int sig_nr;
 	siginfo_t *info;
 	void *extra;
-}__attribute__((packed));
+};
 
 static btree_t *root = NULL;
 static pthread_mutex_t mtx;
