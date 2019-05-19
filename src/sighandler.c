@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include "libbtree.h"
 #include "linked_list.h"
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
 typedef void (*on_sig)(int);
 typedef void (*on_sigact)(int, siginfo_t *, void *);
 
@@ -61,6 +64,7 @@ void free_node_data(void *node)
 {
 	struct tree_data *n = (struct tree_data *) node;
 	if (n){
+		sigaction(n->sig_nr, NULL, n->old_act);
 		linked_list_free(n->handlers, 1);
 		free(n);
 	}
@@ -80,10 +84,12 @@ void for_each_list_node(struct linked_list_node *n, void *extra)
 static void _os_sig_handler(int sig_nr, siginfo_t *info, void *e)
 {
 	lock
-	btree_t *n = find_tree_node(&root, &(struct tree_data){sig_nr, 0, 0, 0, 0}, comp_sig);
+	btree_t *n = find_tree_node(&root,
+		&(struct tree_data){sig_nr, 0, 0, 0, 0}, comp_sig);
 	if (n)
 		linked_list_itr(((struct tree_data *) n->data)->handlers,
-		                for_each_list_node, &(struct sig_handler_args) {sig_nr, info, e});
+		                for_each_list_node, &(struct sig_handler_args)
+					{sig_nr, info, e});
 	unlock
 }
 
@@ -118,7 +124,8 @@ static int _reg_sig(int sig_nr, on_sig sig_handler, on_sigact sigact_handler,
 	int reged = 0;
 
 	lock
-	btree_t *sig_node = find_tree_node(&root, &((struct tree_data){sig_nr, 0, 0, 0, 0}), comp_sig);
+	btree_t *sig_node = find_tree_node(&root, &((struct tree_data)
+		{sig_nr, 0, 0, 0, 0}), comp_sig);
 
 	struct list_data *d = calloc(1, sizeof(struct list_data));
 	d->sig_handler = sig_handler;
@@ -126,11 +133,12 @@ static int _reg_sig(int sig_nr, on_sig sig_handler, on_sigact sigact_handler,
 
 	if (sig_node) {
 		struct tree_data *t = (struct tree_data *) sig_node->data;
-		if (!linked_list_find(t->handlers, &((struct list_data){sig_handler, sigact_handler, NULL}), comp_handler))
+		if (!linked_list_find(t->handlers, &((struct list_data)
+			{sig_handler, sigact_handler, NULL}), comp_handler))
 			linked_list_append(&(t->handlers), d);
 		reged = 1;
 	} else {
-		struct tree_data *t = (struct tree_data *)calloc(1, sizeof(struct tree_data));
+		struct tree_data *t = calloc(1, sizeof(struct tree_data));
 		t->blck_mask = blck_mask;
 		t->sig_nr = sig_nr;
 		t->flags = flags;
@@ -161,31 +169,41 @@ static void _unreg_sig(int sig_num, on_sig sig_handler,
                 on_sigact sig_acthandler)
 {
 	lock
-	del_tree_node(&root, (void *) &(struct tree_data){sig_num, 0, 0, 0, 0 }, comp_sig, free_node_data);
+		btree_t *n = find_tree_node(&root,
+		&(struct tree_data){sig_num, 0, 0, 0, 0}, comp_sig);
+	if (n) {
+		struct tree_data *d = (struct tree_data *)n->data;
+		linked_list_remove(&(d->handlers),
+			&(struct list_data) {sig_handler, sig_acthandler, 0},
+				comp_handler, 1);
+	if (!d->handlers)
+		del_tree_node(&root, &(struct tree_data){sig_num, 0, 0, 0, 0},
+			comp_sig, free_node_data);
+	}
 	unlock
 }
 
 /*public functions*/
-int reg_sig(const int sig_nr, const void (*sahandler)(const int),
+int reg_sig(const int sig_nr, void (*sahandler)(const int),
                 const int mask, const int flags)
 {
 	return _reg_sig(sig_nr, sahandler, NULL, mask, flags);
 }
 
 int reg_sigaction(const int sig_nr,
-                const void (*sigact_handler)(int, siginfo_t *, void *),
+	void (*sigact_handler)(int, siginfo_t *, void *),
                 const int mask, const int flags)
 {
 	return _reg_sig(sig_nr, NULL, sigact_handler, mask, flags);
 }
 
-void unreg_sig(const int sig_nr, const void (*sahandler)(const int))
+void unreg_sig(const int sig_nr, void (*sahandler)(const int))
 {
 	return _unreg_sig(sig_nr, sahandler, NULL);
 }
 
 void unreg_sigaction(const int sig_nr,
-                const void (*sigact_handler)(int, siginfo_t *, void *))
+	void (*sigact_handler)(int, siginfo_t *, void *))
 {
 	return _unreg_sig(sig_nr, NULL, sigact_handler);
 }

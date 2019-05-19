@@ -14,7 +14,7 @@ git clone https://github.com/harooonm/liblinkedlist.git
 
 CUR_DIR=$(pwd)
 cd libbtree &&  make $BUILD_TYPE &&
-cd ../liblinkedlist && make £BUILD_TYPE && cd "$CUR_DIR"
+cd ../liblinkedlist && make $BUILD_TYPE && cd "$CUR_DIR"
 
 cp libbtree/include/*.h include && cp liblinkedlist/include/*.h include
 mkdir lib && cp libbtree/libbtree.so lib/  && cp liblinkedlist/liblinkedlist.so lib/
