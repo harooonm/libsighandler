@@ -1,4 +1,4 @@
-BUILD_TYPE=Debug
+BUILD_TYPE=debug
 
 rm -rf libbtree/
 rm -rf liblinkedlist/
@@ -13,13 +13,13 @@ git clone https://github.com/harooonm/libbtree.git
 git clone https://github.com/harooonm/liblinkedlist.git
 
 CUR_DIR=$(pwd)
-cd libbtree && cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" . && make &&
-cd ../liblinkedlist && cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" . && make && cd "$CUR_DIR"
+cd libbtree &&  make $BUILD_TYPE &&
+cd ../liblinkedlist && make £BUILD_TYPE && cd "$CUR_DIR"
 
 cp libbtree/include/*.h include && cp liblinkedlist/include/*.h include
 mkdir lib && cp libbtree/libbtree.so lib/  && cp liblinkedlist/liblinkedlist.so lib/
 
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$CUR_DIR"
-cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" . && make
+make $BUILD_TYPE
 rm -rf libbtree/
 rm -rf liblinkedlist/
