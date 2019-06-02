@@ -1,7 +1,7 @@
 #include "examples.h"
 #include <stdio.h>
 
-void act_handler(int num, siginfo_t *info , void *e)
+void act_handler(int UNUSED num, siginfo_t *info , void UNUSED *e)
 {
 	paste("caught in act_handler %d  sending pid = %d \n",
 			info->si_signo, info->si_pid);
@@ -16,6 +16,7 @@ int main()
 	}
 
 	puts("waiting for ctrl+c");
+	errno = 0;
 	wait_on_cond();
 	unreg_sigaction(SIGINT, act_handler);
 	return 0;

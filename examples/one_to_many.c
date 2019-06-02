@@ -1,7 +1,7 @@
 #include "examples.h"
 #define FMT_PRNT "caught %d\n"
 #include <stdlib.h>
-
+#include <errno.h>
 void many(int n)
 {
 	switch (n) {
@@ -18,7 +18,7 @@ void many(int n)
 	}
 }
 
-int main(int argc, char **argv)
+int main(int UNUSED argc, char UNUSED **argv)
 {
 	char *err = "reg_sig(SIGINT)";
 	if (!reg_sig(SIGINT, many, 0, 0))
@@ -34,7 +34,9 @@ int main(int argc, char **argv)
 
 	err = "waiting for SIGUSR2";
 	paste(FMT_STR, "i am waiting for SIGUSR2");
+	errno = 0;
 	wait_on_cond();
 	return0:
+		fprintf(stderr, "%s %s\n\n", err, strerror(errno));
 		return 0;
 }

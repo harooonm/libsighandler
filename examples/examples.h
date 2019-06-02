@@ -4,6 +4,8 @@
 #include "sighandler.h"
 #include <stdio.h>
 #include <pthread.h>
+#include <errno.h>
+#include <string.h>
 
 #define FMT_STR "%s\n"
 #define paste(fmt,...) fprintf(stdout, fmt, __VA_ARGS__);

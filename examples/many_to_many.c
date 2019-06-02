@@ -22,7 +22,7 @@ int main(int UNUSED argc, char UNUSED **argv)
 	char *err ="reg_sig(SIGINT)";
 	if (!reg_sig(SIGINT, catch_int, 0, 0))
 		goto return0;
-	
+
 	err = "reg_sig(SIGQUIT)";
 	if (!reg_sig(SIGQUIT, catch_quit, 0, 0))
 		goto return0;
@@ -33,8 +33,12 @@ int main(int UNUSED argc, char UNUSED **argv)
 
 	err = "waiting for abort";
 	paste(FMT_STR, "i am waiting for SIGABRT");
+
+	errno = 0;
+
 	wait_on_cond();
 
 	return0:
+		fprintf(stderr, "%s %s\n", err, strerror(errno));
 		return 0;
 }

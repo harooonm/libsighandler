@@ -1,5 +1,5 @@
 help:
-	@echo "targets debug release"
+	@echo "small debug fast"
 
 clean:
 	rm -f sighandler.o
@@ -13,13 +13,19 @@ CFLAGS=-Wall -Wextra -Wfatal-errors -D_POSIX_C_SOURCE=200809L\
 	-std=c11
 
 IFLAGS=-I$(INCDIR)
+TYPE=debug
 
 debug:	CFLAGS += -g -Og
-release:	CFLAGS += -flto -Os -s
+small:	CFLAGS += -flto -Os -s
+small:	TYPE=small
+fast:	CFLAGS += -O2
+fast:	TYPE=fast
 
 debug:	objs
-release:	objs
+small:	objs
+fast:	objs
 
+objs:	clean
 
 objs:
 	$(CC) -c -fPIC $(CFLAGS) $(IFLAGS) $(SRCS)
